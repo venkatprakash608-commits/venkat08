@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Order Fulfillment Management - NovaStore Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Top Navigation -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+            <nav class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
+                <a href="{{ url_for('admin_dashboard') }}" class="hover:text-brand-600">Admin</a>
+                <span>/</span>
+                <span class="text-slate-800 font-semibold">Orders</span>
+            </nav>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans']">
+                Customer Orders & Tracking Management
+            </h1>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 mb-6 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        
+        <!-- Status Filter Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+            {% set statuses = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] %}
+            {% for st in statuses %}
+            <a href="{{ url_for('admin_orders', status=st, q=search) }}"
+               class="px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if selected_status == st %}bg-slate-900 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                {{ st }}
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Search Box -->
+        <form method="GET" action="{{ url_for('admin_orders') }}" class="relative w-full md:w-72">
+            {% if selected_status and selected_status != 'All' %}
+            <input type="hidden" name="status" value="{{ selected_status }}">
+            {% endif %}
+            <input type="text" name="q" value="{{ search }}" placeholder="Search by Order # or Customer..."
+                   class="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </form>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase tracking-wider">
+                        <th class="py-3 px-4">Order Ref</th>
+                        <th class="py-3 px-4">Customer</th>
+                        <th class="py-3 px-4">Date</th>
+                        <th class="py-3 px-4">Total</th>
+                        <th class="py-3 px-4">Status & Action</th>
+                        <th class="py-3 px-4 text-right">Details</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    {% if orders %}
+                        {% for ord in orders %}
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="py-3.5 px-4 font-mono font-bold text-slate-900">
+                                <a href="{{ url_for('admin_order_detail', order_id=ord.id) }}" class="hover:text-brand-600 underline decoration-slate-300">
+                                    {{ ord.order_number }}
+                                </a>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <div class="font-bold text-slate-900">{{ ord.customer_name }}</div>
+                                <div class="text-[11px] text-slate-400">{{ ord.email }} &bull; {{ ord.phone }}</div>
+                            </td>
+                            <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                                {{ ord.created_at.strftime('%b %d, %Y') }}<br>
+                                <span class="text-[10px] text-slate-400">{{ ord.created_at.strftime('%I:%M %p') }}</span>
+                            </td>
+                            <td class="py-3.5 px-4 font-extrabold text-slate-900 font-['Plus_Jakarta_Sans'] whitespace-nowrap">
+                                ${{ "%.2f"|format(ord.total_amount) }}
+                                <span class="text-[10px] text-slate-400 block font-normal">{{ ord.items|length }} items</span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <!-- Quick Status Change Form -->
+                                <form action="{{ url_for('admin_update_order_status', order_id=ord.id) }}" method="POST" class="flex items-center gap-2">
+                                    <select name="status" onchange="this.form.submit()"
+                                            class="py-1 px-2.5 rounded-lg border text-xs font-bold cursor-pointer transition-all {% if ord.status == 'Delivered' %}bg-emerald-50 text-emerald-800 border-emerald-200{% elif ord.status == 'Shipped' %}bg-sky-50 text-sky-800 border-sky-200{% elif ord.status == 'Processing' %}bg-amber-50 text-amber-800 border-amber-200{% elif ord.status == 'Cancelled' %}bg-rose-50 text-rose-800 border-rose-200{% else %}bg-purple-50 text-purple-800 border-purple-200{% endif %}">
+                                        <option value="Pending" {% if ord.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="Processing" {% if ord.status == 'Processing' %}selected{% endif %}>Processing</option>
+                                        <option value="Shipped" {% if ord.status == 'Shipped' %}selected{% endif %}>Shipped</option>
+                                        <option value="Delivered" {% if ord.status == 'Delivered' %}selected{% endif %}>Delivered</option>
+                                        <option value="Cancelled" {% if ord.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <a href="{{ url_for('admin_order_detail', order_id=ord.id) }}" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-brand-600 hover:text-white text-slate-700 font-bold transition-all text-xs">
+                                    View Receipt
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-slate-400 text-xs">
+                                No orders matching your criteria.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
