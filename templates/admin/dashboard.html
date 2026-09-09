@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - NovaStore Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Top Admin Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-md bg-brand-100 text-brand-700 text-xs font-bold uppercase tracking-wider">
+                    Store Administration
+                </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans'] mt-1">
+                Overview & Operations
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('admin_products') }}" class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                Manage Products
+            </a>
+            <a href="{{ url_for('admin_orders') }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Manage Orders
+            </a>
+        </div>
+    </div>
+
+    <!-- Stat Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        
+        <!-- Total Revenue -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Gross Sales</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">$</div>
+            </div>
+            <div class="text-2xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans'] mt-2">
+                ${{ "%.2f"|format(total_revenue) }}
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Excluding cancelled orders</span>
+        </div>
+
+        <!-- Total Orders -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Orders</span>
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">📦</div>
+            </div>
+            <div class="text-2xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans'] mt-2">
+                {{ total_orders }}
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Lifetime customer orders</span>
+        </div>
+
+        <!-- Total Products -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Products in Catalog</span>
+                <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">🏷️</div>
+            </div>
+            <div class="text-2xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans'] mt-2">
+                {{ total_products }}
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Active merchandise items</span>
+        </div>
+
+        <!-- Low Stock Alerts -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Stock Alerts</span>
+                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">⚠️</div>
+            </div>
+            <div class="text-2xl font-extrabold {% if low_stock_products|length > 0 %}text-amber-600{% else %}text-slate-900{% endif %} font-['Plus_Jakarta_Sans'] mt-2">
+                {{ low_stock_products|length }}
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Items with &le; 5 units</span>
+        </div>
+
+    </div>
+
+    <!-- Order Status Pipeline -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 mb-8 shadow-xs">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Order Pipeline Status</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <a href="{{ url_for('admin_orders', status='Pending') }}" class="p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition-all border border-purple-100 text-center">
+                <span class="text-xl font-extrabold text-purple-700 block font-['Plus_Jakarta_Sans']">{{ status_counts['Pending'] }}</span>
+                <span class="text-xs font-semibold text-purple-900 mt-1 block">Pending</span>
+            </a>
+            <a href="{{ url_for('admin_orders', status='Processing') }}" class="p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition-all border border-amber-100 text-center">
+                <span class="text-xl font-extrabold text-amber-700 block font-['Plus_Jakarta_Sans']">{{ status_counts['Processing'] }}</span>
+                <span class="text-xs font-semibold text-amber-900 mt-1 block">Processing</span>
+            </a>
+            <a href="{{ url_for('admin_orders', status='Shipped') }}" class="p-4 rounded-xl bg-sky-50 hover:bg-sky-100 transition-all border border-sky-100 text-center">
+                <span class="text-xl font-extrabold text-sky-700 block font-['Plus_Jakarta_Sans']">{{ status_counts['Shipped'] }}</span>
+                <span class="text-xs font-semibold text-sky-900 mt-1 block">In Transit</span>
+            </a>
+            <a href="{{ url_for('admin_orders', status='Delivered') }}" class="p-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 transition-all border border-emerald-100 text-center">
+                <span class="text-xl font-extrabold text-emerald-700 block font-['Plus_Jakarta_Sans']">{{ status_counts['Delivered'] }}</span>
+                <span class="text-xs font-semibold text-emerald-900 mt-1 block">Delivered</span>
+            </a>
+            <a href="{{ url_for('admin_orders', status='Cancelled') }}" class="p-4 rounded-xl bg-rose-50 hover:bg-rose-100 transition-all border border-rose-100 text-center">
+                <span class="text-xl font-extrabold text-rose-700 block font-['Plus_Jakarta_Sans']">{{ status_counts['Cancelled'] }}</span>
+                <span class="text-xs font-semibold text-rose-900 mt-1 block">Cancelled</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Recent Orders Table -->
+        <div class="lg:col-span-8">
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-900">Recent Customer Orders</h3>
+                    <a href="{{ url_for('admin_orders') }}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View All Orders &rarr;</a>
+                </div>
+
+                {% if recent_orders %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase tracking-wider">
+                                <th class="py-3 px-4">Order Ref</th>
+                                <th class="py-3 px-4">Customer</th>
+                                <th class="py-3 px-4">Items</th>
+                                <th class="py-3 px-4">Total</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700">
+                            {% for ord in recent_orders %}
+                            <tr class="hover:bg-slate-50/70 transition-colors">
+                                <td class="py-3.5 px-4 font-mono font-bold text-slate-900">
+                                    <a href="{{ url_for('admin_order_detail', order_id=ord.id) }}" class="hover:text-brand-600 underline decoration-slate-300">
+                                        {{ ord.order_number }}
+                                    </a>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <div class="font-semibold text-slate-900">{{ ord.customer_name }}</div>
+                                    <div class="text-[11px] text-slate-400">{{ ord.email }}</div>
+                                </td>
+                                <td class="py-3.5 px-4">{{ ord.items|length }} items</td>
+                                <td class="py-3.5 px-4 font-bold text-slate-900 font-['Plus_Jakarta_Sans']">
+                                    ${{ "%.2f"|format(ord.total_amount) }}
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold {% if ord.status == 'Delivered' %}bg-emerald-100 text-emerald-800{% elif ord.status == 'Shipped' %}bg-sky-100 text-sky-800{% elif ord.status == 'Processing' %}bg-amber-100 text-amber-800{% elif ord.status == 'Cancelled' %}bg-rose-100 text-rose-800{% else %}bg-purple-100 text-purple-800{% endif %}">
+                                        {{ ord.status }}
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4 text-right">
+                                    <a href="{{ url_for('admin_order_detail', order_id=ord.id) }}" class="text-brand-600 hover:text-brand-700 font-bold">
+                                        Update
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-8 text-center text-slate-400 text-xs">
+                    No orders have been received yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Low Stock Alerts Widget -->
+        <div class="lg:col-span-4">
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-900">Inventory Watchlist</h3>
+                    <a href="{{ url_for('admin_products') }}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Inventory &rarr;</a>
+                </div>
+
+                <div class="p-4 space-y-3">
+                    {% if low_stock_products %}
+                        {% for p in low_stock_products %}
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <div class="min-w-0 pr-2">
+                                <h5 class="text-xs font-bold text-slate-900 truncate">{{ p.name }}</h5>
+                                <span class="text-[11px] text-slate-400">{{ p.category }} &bull; ${{ "%.2f"|format(p.price) }}</span>
+                            </div>
+                            <span class="px-2 py-1 rounded-lg text-xs font-bold whitespace-nowrap {% if p.stock == 0 %}bg-rose-100 text-rose-700{% else %}bg-amber-100 text-amber-800{% endif %}">
+                                {{ p.stock }} in stock
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="py-8 text-center text-slate-400 text-xs">
+                        🎉 All catalog items have healthy stock levels!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
