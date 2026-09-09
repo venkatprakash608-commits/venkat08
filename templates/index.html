@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Store Catalog - NovaStore{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Hero Banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-8 sm:p-12 mb-10 shadow-xl">
+        <div class="relative z-10 max-w-2xl">
+            <span class="inline-block py-1 px-3 rounded-full bg-brand-500/20 text-brand-300 text-xs font-semibold uppercase tracking-wider mb-4 border border-brand-500/30">
+                New Season Arrivals
+            </span>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight font-['Plus_Jakarta_Sans']">
+                Curated Quality. <br><span class="text-indigo-400">Tracked to Your Door.</span>
+            </h1>
+            <p class="mt-4 text-slate-300 text-sm sm:text-base leading-relaxed">
+                Discover everyday essentials and smart electronics with transparent, real-time order tracking from warehouse to your doorstep.
+            </p>
+            <div class="mt-6 flex flex-wrap items-center gap-3">
+                <a href="#products-section" class="px-6 py-3 rounded-xl bg-white text-slate-900 font-bold text-sm hover:bg-slate-100 transition-all shadow-md">
+                    Shop Collection
+                </a>
+                <a href="{{ url_for('track_order') }}" class="px-6 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-white font-medium text-sm transition-all border border-slate-700 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Track Existing Order
+                </a>
+            </div>
+        </div>
+        <div class="absolute -right-16 -bottom-16 w-96 h-96 bg-brand-600/20 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div id="products-section" class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200">
+        
+        <!-- Category Pills -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+            <a href="{{ url_for('index', q=search_query, sort=sort_by) }}" 
+               class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all {% if selected_category == 'All' %}bg-brand-600 text-white shadow-md shadow-brand-500/20{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                All Items
+            </a>
+            {% for cat in categories %}
+            <a href="{{ url_for('index', category=cat, q=search_query, sort=sort_by) }}" 
+               class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all {% if selected_category == cat %}bg-brand-600 text-white shadow-md shadow-brand-500/20{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                {{ cat }}
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Search & Sort Forms -->
+        <form method="GET" action="{{ url_for('index') }}" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {% if selected_category and selected_category != 'All' %}
+            <input type="hidden" name="category" value="{{ selected_category }}">
+            {% endif %}
+
+            <!-- Search Input -->
+            <div class="relative flex-grow sm:w-64">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search products..." 
+                       class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+
+            <!-- Sort Dropdown -->
+            <select name="sort" onchange="this.form.submit()" 
+                    class="py-2 pl-3 pr-8 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium text-slate-700 cursor-pointer">
+                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name: A to Z</option>
+            </select>
+        </form>
+    </div>
+
+    <!-- Product Grid -->
+    {% if products %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for product in products %}
+        <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden card-hover flex flex-col group">
+            
+            <!-- Image Container -->
+            <a href="{{ url_for('product_detail', product_id=product.id) }}" class="relative block aspect-[4/3] overflow-hidden bg-slate-100">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" 
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                     loading="lazy"
+                     onerror="this.src='https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&auto=format&fit=crop&q=80'">
+                
+                <!-- Category Badge -->
+                <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white/90 backdrop-blur-md text-slate-800 shadow-sm">
+                    {{ product.category }}
+                </span>
+
+                <!-- Stock Badge -->
+                {% if product.stock <= 0 %}
+                <span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-500/90 text-white shadow-sm">
+                    Out of Stock
+                </span>
+                {% elif product.stock <= 5 %}
+                <span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/90 text-white shadow-sm">
+                    Only {{ product.stock }} left
+                </span>
+                {% endif %}
+            </a>
+
+            <!-- Product Info -->
+            <div class="p-5 flex flex-col flex-grow justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base leading-snug group-hover:text-brand-600 transition-colors">
+                        <a href="{{ url_for('product_detail', product_id=product.id) }}">
+                            {{ product.name }}
+                        </a>
+                    </h3>
+                    <p class="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                        {{ product.description }}
+                    </p>
+                </div>
+
+                <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 block font-medium">Price</span>
+                        <span class="text-xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans']">
+                            ${{ "%.2f"|format(product.price) }}
+                        </span>
+                    </div>
+
+                    {% if product.stock > 0 %}
+                    <button type="button"
+                            data-add-to-cart
+                            data-product='{{ product.to_dict()|tojson }}'
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs transition-all shadow-sm active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add to Cart
+                    </button>
+                    {% else %}
+                    <button type="button" disabled class="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-400 font-medium text-xs cursor-not-allowed">
+                        Sold Out
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-20 bg-white rounded-3xl border border-slate-200 p-8">
+        <div class="w-16 h-16 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 mb-4">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">No products found</h3>
+        <p class="text-sm text-slate-500 mt-1">Try resetting your category filter or adjusting your search term.</p>
+        <div class="mt-6">
+            <a href="{{ url_for('index') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-all">
+                Reset All Filters
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
