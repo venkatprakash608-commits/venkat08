@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - NovaStore{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Breadcrumbs -->
+    <nav class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-8">
+        <a href="{{ url_for('index') }}" class="hover:text-brand-600">Store</a>
+        <span>/</span>
+        <a href="{{ url_for('index', category=product.category) }}" class="hover:text-brand-600">{{ product.category }}</a>
+        <span>/</span>
+        <span class="text-slate-800 font-semibold truncate">{{ product.name }}</span>
+    </nav>
+
+    <!-- Main Product Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-3xl p-6 sm:p-10 border border-slate-200/80 shadow-sm">
+        
+        <!-- Product Image Showcase -->
+        <div class="rounded-2xl overflow-hidden bg-slate-100 aspect-square flex items-center justify-center relative">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}"
+                 class="w-full h-full object-cover object-center"
+                 onerror="this.src='https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&auto=format&fit=crop&q=80'">
+            
+            {% if product.stock <= 0 %}
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center">
+                <span class="px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-sm tracking-wide uppercase">
+                    Currently Out of Stock
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Product Actions & Details -->
+        <div class="flex flex-col justify-between">
+            <div>
+                <div class="flex items-center gap-3">
+                    <span class="px-3 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-100">
+                        {{ product.category }}
+                    </span>
+                    {% if product.stock > 10 %}
+                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> In Stock ({{ product.stock }} units)
+                    </span>
+                    {% elif product.stock > 0 %}
+                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Only {{ product.stock }} left!
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span> Out of Stock
+                    </span>
+                    {% endif %}
+                </div>
+
+                <h1 class="mt-4 text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans'] leading-tight">
+                    {{ product.name }}
+                </h1>
+
+                <div class="mt-4 flex items-baseline gap-3">
+                    <span class="text-3xl font-black text-slate-900 font-['Plus_Jakarta_Sans']">
+                        ${{ "%.2f"|format(product.price) }}
+                    </span>
+                    <span class="text-xs text-slate-400 font-medium">Taxes included & free domestic shipping</span>
+                </div>
+
+                <div class="mt-6 border-t border-slate-100 pt-6">
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">Description</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        {{ product.description or 'No product description provided.' }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Form -->
+            <div class="mt-8 border-t border-slate-100 pt-6">
+                {% if product.stock > 0 %}
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50 w-36">
+                        <button type="button" id="qty-minus" class="w-10 h-11 flex items-center justify-center font-bold text-slate-600 hover:bg-slate-200 transition-colors">-</button>
+                        <input type="number" id="detail-qty" value="1" min="1" max="{{ product.stock }}" 
+                               class="w-16 h-11 text-center bg-transparent border-0 font-bold text-slate-900 text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                        <button type="button" id="qty-plus" class="w-10 h-11 flex items-center justify-center font-bold text-slate-600 hover:bg-slate-200 transition-colors">+</button>
+                    </div>
+
+                    <button type="button" id="detail-add-btn"
+                            class="flex-1 py-3.5 px-6 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition-all shadow-md shadow-brand-500/25 flex items-center justify-center gap-2 active:scale-98">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        Add to Shopping Cart
+                    </button>
+                </div>
+                {% else %}
+                <button type="button" disabled class="w-full py-3.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-sm cursor-not-allowed">
+                    Sold Out - Check back soon
+                </button>
+                {% endif %}
+
+                <!-- Guarantee badges -->
+                <div class="mt-8 grid grid-cols-3 gap-4 pt-6 border-t border-slate-100 text-center">
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl mb-1">🚚</span>
+                        <span class="text-[11px] font-bold text-slate-800">Fast Dispatch</span>
+                        <span class="text-[10px] text-slate-400">Within 24 Hours</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl mb-1">📍</span>
+                        <span class="text-[11px] font-bold text-slate-800">Live Tracking</span>
+                        <span class="text-[10px] text-slate-400">Full order timeline</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl mb-1">🛡️</span>
+                        <span class="text-[11px] font-bold text-slate-800">Secure Order</span>
+                        <span class="text-[10px] text-slate-400">Verified inventory</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="mt-16">
+        <h2 class="text-xl font-bold text-slate-900 font-['Plus_Jakarta_Sans'] mb-6">Related from {{ product.category }}</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for rel in related_products %}
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden card-hover flex flex-col group">
+                <a href="{{ url_for('product_detail', product_id=rel.id) }}" class="aspect-[4/3] block overflow-hidden bg-slate-100">
+                    <img src="{{ rel.image_url }}" alt="{{ rel.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                </a>
+                <div class="p-4 flex flex-col flex-grow justify-between">
+                    <h4 class="font-bold text-slate-900 text-sm line-clamp-1 group-hover:text-brand-600">
+                        <a href="{{ url_for('product_detail', product_id=rel.id) }}">{{ rel.name }}</a>
+                    </h4>
+                    <div class="mt-3 flex items-center justify-between">
+                        <span class="font-extrabold text-slate-900 text-sm">${{ "%.2f"|format(rel.price) }}</span>
+                        <button type="button" data-add-to-cart data-product='{{ rel.to_dict()|tojson }}'
+                                class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-brand-600 hover:text-white text-slate-700 text-xs font-semibold transition-all">
+                            Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const qtyInput = document.getElementById('detail-qty');
+    const btnMinus = document.getElementById('qty-minus');
+    const btnPlus = document.getElementById('qty-plus');
+    const btnAdd = document.getElementById('detail-add-btn');
+    const maxStock = {{ product.stock }};
+
+    if (btnMinus && qtyInput) {
+        btnMinus.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value) || 1;
+            if (val > 1) qtyInput.value = val - 1;
+        });
+    }
+
+    if (btnPlus && qtyInput) {
+        btnPlus.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value) || 1;
+            if (val < maxStock) qtyInput.value = val + 1;
+        });
+    }
+
+    if (btnAdd) {
+        btnAdd.addEventListener('click', () => {
+            const qty = parseInt(qtyInput.value) || 1;
+            const product = {{ product.to_dict()|tojson }};
+            Cart.addItem(product, qty);
+        });
+    }
+});
+</script>
+{% endblock %}
